@@ -1,0 +1,67 @@
+{
+  "nodes": {
+    "n_ml": {
+      "id": "n_ml",
+      "title": "Machine Learning",
+      "parentId": null,
+      "children": ["n_sup", "n_eval"],
+      "blocks": [
+        {
+          "id": "b_ml_1",
+          "type": "text",
+          "text": "# Machine Learning\n\nTop-level notebook for ML coursework and interview prep. Use sub-sections on the left for each topic."
+        }
+      ],
+      "collapsed": false
+    },
+    "n_sup": {
+      "id": "n_sup",
+      "title": "Supervised Learning",
+      "parentId": "n_ml",
+      "children": ["n_linreg"],
+      "blocks": [],
+      "collapsed": false
+    },
+    "n_linreg": {
+      "id": "n_linreg",
+      "title": "Linear Regression",
+      "parentId": "n_sup",
+      "children": [],
+      "blocks": [
+        {
+          "id": "b_lr_1",
+          "type": "text",
+          "text": "## Theory\n\nLinear regression models the relationship between a dependent variable `y` and one or more independent variables `x` by fitting a linear equation.\n\n- Assumes linearity, independence of errors, homoscedasticity, and normally distributed residuals\n- Optimized by minimizing **Mean Squared Error** using Ordinary Least Squares or Gradient Descent"
+        },
+        {
+          "id": "b_lr_2",
+          "type": "code",
+          "lang": "python",
+          "code": "from sklearn.linear_model import LinearRegression\n\nmodel = LinearRegression()\nmodel.fit(X_train, y_train)\npreds = model.predict(X_test)\nprint(model.coef_, model.intercept_)"
+        },
+        {
+          "id": "b_lr_3",
+          "type": "text",
+          "text": "### Cost function\n\n`J(theta) = (1/2m) * sum((h(x_i) - y_i)^2)`"
+        }
+      ],
+      "collapsed": false
+    },
+    "n_eval": {
+      "id": "n_eval",
+      "title": "Model Evaluation",
+      "parentId": "n_ml",
+      "children": [],
+      "blocks": [
+        {
+          "id": "b_ev_1",
+          "type": "text",
+          "text": "## Common metrics\n\n- **Classification**: accuracy, precision, recall, F1, ROC-AUC\n- **Regression**: MAE, MSE, RMSE, R²\n\nAdd screenshots of confusion matrices or ROC curves here using an Image block."
+        }
+      ],
+      "collapsed": false
+    }
+  },
+  "rootIds": ["n_ml"],
+  "selectedId": "n_linreg"
+}
