@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ML Notes</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Cpath%20d='M4%203.5A1.5%201.5%200%200%201%205.5%202H15l5%205v14.5a1.5%201.5%200%200%201-1.5%201.5h-13A1.5%201.5%200%200%201%204%2021.5z'%20fill='%233A6EA5'/%3E%3Cpath%20d='M15%202v5h5z'%20fill='%23fff'%20opacity='.35'/%3E%3Cpath%20d='M8%2011.5L12%2014.5M8%2017.5L12%2014.5M12%2014.5L16%2011.5M12%2014.5L16%2017.5'%20stroke='%23fff'%20stroke-width='1.2'%20stroke-linecap='round'%20fill='none'%20opacity='.85'/%3E%3Cg%20fill='%23fff'%3E%3Ccircle%20cx='8'%20cy='11.5'%20r='1.6'/%3E%3Ccircle%20cx='8'%20cy='17.5'%20r='1.6'/%3E%3Ccircle%20cx='12'%20cy='14.5'%20r='1.8'/%3E%3Ccircle%20cx='16'%20cy='11.5'%20r='1.6'/%3E%3Ccircle%20cx='16'%20cy='17.5'%20r='1.6'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Google Identity Services: browser OAuth 2.0 popup for the optional "Save to Google Drive" feature -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#F7F7F5; --bg-elev:#FFFFFF; --text:#1A1A1E; --muted:#6B6B76;
+    --border:#E4E3DF; --accent:#3A6EA5; --accent-ink:#FFFFFF;
+    --danger:#B3452E; --code-bg:#1E1E24; --code-text:#E8E8EA; --hover:#EFEFEC;
+  }
+  [data-theme="dark"]{
+    --bg:#16171B; --bg-elev:#1D1E23; --text:#EDEDEF; --muted:#9A9AA5;
+    --border:#2B2C32; --accent:#6C9BD1; --accent-ink:#0E1116;
+    --danger:#E07856; --code-bg:#101114; --code-text:#E8E8EA; --hover:#24252B;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  [hidden]{ display:none !important; } /* prevents author display:flex/block rules from overriding the hidden attribute */
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  code, pre, textarea.code-input, .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, textarea, select{ font-family:inherit; color:var(--text); }
+  ::selection{ background:var(--accent); color:var(--accent-ink); }
+
+  #app{ display:flex; height:100vh; overflow:hidden; }
+
+  /* Sidebar */
+  #sidebar{
+    width:280px; flex-shrink:0; background:var(--bg-elev);
+    border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto;
+    transition:transform .2s ease;
+  }
+  .sidebar-header{ display:flex; align-items:center; justify-content:space-between; padding:18px 16px 8px; }
+  .sidebar-header h1{ font-size:16px; font-weight:600; margin:0; letter-spacing:.01em; }
+  #theme-toggle, #menu-toggle, #quick-capture-btn{
+    background:none; border:1px solid var(--border); border-radius:6px;
+    width:30px; height:30px; font-size:14px; color:var(--text);
+  }
+  #menu-toggle{ display:none; }
+  #search{
+    margin:4px 16px 10px; padding:8px 10px; border:1px solid var(--border);
+    border-radius:7px; background:var(--bg); font-size:13px; outline:none;
+  }
+  #search:focus{ border-color:var(--accent); }
+  #tree{ flex:1; min-height:140px; overflow-y:auto; padding:2px 8px 8px; }
+  .tree-row{
+    display:flex; align-items:center; gap:4px; padding:5px 6px; border-radius:6px;
+    font-size:13.5px; cursor:pointer; user-select:none;
+  }
+  .tree-row:hover{ background:var(--hover); }
+  .tree-row.active{ background:var(--accent); color:var(--accent-ink); }
+  .tree-row.active .tree-actions button{ color:var(--accent-ink); }
+  .toggle{ width:14px; text-align:center; color:var(--muted); font-size:10px; flex-shrink:0; }
+  .tree-row.active .toggle{ color:var(--accent-ink); }
+  .tree-title{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tree-actions{ display:none; gap:2px; flex-shrink:0; }
+  .tree-row:hover .tree-actions{ display:flex; }
+  .tree-actions button{
+    background:none; border:none; color:var(--muted); font-size:13px; width:20px; height:20px; border-radius:4px;
+  }
+  .tree-actions button:hover{ background:rgba(0,0,0,.08); }
+  #add-root-btn{
+    margin:6px 16px 4px; padding:8px 10px; border:1px dashed var(--border); border-radius:7px;
+    background:none; color:var(--muted); font-size:13px; text-align:left;
+  }
+  #add-root-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .sidebar-footer{ padding:10px 16px 16px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+  .sidebar-footer button, .file-label{
+    padding:7px 10px; border:1px solid var(--border); border-radius:7px; background:var(--bg);
+    font-size:12.5px; color:var(--text); text-align:left; display:block;
+  }
+  .sidebar-footer button:hover, .file-label:hover{ border-color:var(--accent); color:var(--accent); }
+  .badge{
+    display:inline-block; min-width:16px; padding:0 5px; border-radius:999px; background:var(--accent);
+    color:var(--accent-ink); font-size:10.5px; line-height:16px; text-align:center; margin-left:2px;
+  }
+
+  /* Main */
+  #main{ flex:1; overflow-y:auto; }
+  #empty-state{
+    height:100%; display:flex; align-items:center; justify-content:center;
+    color:var(--muted); font-size:14px;
+  }
+  #note-view{ max-width:760px; margin:0 auto; padding:40px 32px 120px; }
+  .note-toolbar{ display:flex; align-items:flex-start; gap:12px; margin-bottom:22px; flex-wrap:wrap; }
+  #note-title{
+    flex:1; border:none; background:none; outline:none; color:var(--text);
+    font-size:30px; font-weight:600; font-family:inherit; padding:2px 0;
+  }
+  #note-title::placeholder{ color:var(--muted); }
+  .toolbar-actions{ display:flex; flex-wrap:wrap; gap:8px; padding-top:6px; flex-shrink:0; }
+  .toolbar-actions button{
+    padding:7px 12px; border:1px solid var(--border); border-radius:7px; background:var(--bg-elev);
+    font-size:12.5px; color:var(--text);
+  }
+  .toolbar-actions button:hover{ border-color:var(--accent); color:var(--accent); }
+  #delete-note-btn:hover{ border-color:var(--danger); color:var(--danger); }
+  .toolbar-actions button:disabled{ opacity:.6; cursor:default; }
+
+  /* Google Drive status (under the note title) */
+  .gdrive-row{
+    flex-basis:100%; display:flex; flex-wrap:wrap; gap:2px 12px; margin-top:-6px;
+    font-size:11.5px; color:var(--muted);
+  }
+  .gdrive-conn.connected{ color:#3fa34d; }
+  .gdrive-result.ok{ color:#3fa34d; }
+  .gdrive-result.failed{ color:var(--danger); font-weight:500; }
+
+  .block{ margin-bottom:14px; border-radius:9px; }
+  .block-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .block-type{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .block-controls{ display:flex; gap:2px; opacity:0; transition:opacity .12s; }
+  .block:hover .block-controls{ opacity:1; }
+  .block-controls button{
+    background:none; border:none; color:var(--muted); font-size:12px; width:22px; height:22px; border-radius:5px;
+  }
+  .block-controls button:disabled{ opacity:.3; cursor:default; }
+  .block-controls button:hover:not(:disabled){ background:var(--hover); color:var(--text); }
+
+  .text-preview{ font-size:15px; line-height:1.65; padding:4px 2px; border-radius:6px; min-height:1.6em; }
+  .text-preview:hover{ background:var(--hover); cursor:text; }
+  .text-preview p{ margin:0 0 10px; }
+  .text-preview h2{ font-size:22px; margin:18px 0 8px; }
+  .text-preview h3{ font-size:18px; margin:16px 0 6px; }
+  .text-preview h4{ font-size:15px; margin:14px 0 6px; }
+  .text-preview ul{ margin:0 0 10px; padding-left:20px; }
+  .text-preview code{ background:var(--hover); padding:1px 5px; border-radius:4px; font-size:.9em; }
+  .text-preview .placeholder{ color:var(--muted); }
+  textarea.text-input{
+    width:100%; border:1px solid var(--accent); border-radius:6px; padding:8px 10px;
+    background:var(--bg-elev); color:var(--text); font-size:15px; line-height:1.6; resize:none; outline:none;
+  }
+
+  .code-edit{ border:1px solid var(--accent); border-radius:8px; overflow:hidden; background:var(--bg-elev); }
+  .code-edit select{
+    width:100%; border:none; border-bottom:1px solid var(--border); background:var(--bg);
+    padding:6px 10px; font-size:12px; color:var(--muted); outline:none;
+  }
+  textarea.code-input{
+    width:100%; border:none; padding:12px; background:var(--code-bg); color:var(--code-text);
+    font-size:13.5px; line-height:1.55; resize:none; outline:none; display:block;
+  }
+  .code-edit .btn-small{ margin:8px; }
+  .btn-small{
+    padding:5px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg-elev);
+    font-size:12px; color:var(--text);
+  }
+  .btn-small:hover{ border-color:var(--accent); color:var(--accent); }
+  pre{ margin:0; border-radius:8px; overflow-x:auto; background:var(--code-bg); cursor:text; }
+  pre code.hljs{ padding:12px !important; font-size:13.5px; line-height:1.55; background:transparent !important; }
+
+  .note-image{ max-width:100%; border-radius:8px; display:block; border:1px solid var(--border); }
+  .caption-input{
+    width:100%; margin-top:6px; border:none; background:none; color:var(--muted);
+    font-size:12.5px; outline:none; padding:2px;
+  }
+  input[type="file"]{ font-size:12.5px; color:var(--muted); }
+
+  .add-block-row{ display:flex; gap:8px; margin-top:24px; }
+  .add-block-row button{
+    padding:8px 14px; border:1px dashed var(--border); border-radius:7px; background:none;
+    font-size:13px; color:var(--muted);
+  }
+  .add-block-row button:hover{ border-color:var(--accent); color:var(--accent); }
+
+  /* Tags / favorite / status */
+  .note-meta{ display:flex; align-items:center; gap:10px; margin:0 0 10px; flex-wrap:wrap; }
+  .fav-toggle{
+    background:none; border:1px solid var(--border); border-radius:6px;
+    width:30px; height:30px; font-size:15px; color:var(--text); flex-shrink:0;
+  }
+  .fav-toggle.active{ border-color:#d9a441; color:#d9a441; }
+  #status-select{
+    border:1px solid var(--border); border-radius:6px; background:var(--bg-elev);
+    padding:5px 8px; font-size:12.5px; color:var(--text); outline:none;
+  }
+  #status-select:focus{ border-color:var(--accent); }
+  .tags-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; flex:1; }
+  .tag-chip{
+    display:inline-flex; align-items:center; gap:4px; padding:3px 8px 3px 10px; border-radius:999px;
+    background:var(--hover); font-size:11.5px; color:var(--text);
+  }
+  .tag-chip button{ background:none; border:none; color:var(--muted); font-size:12px; line-height:1; padding:0 2px; }
+  .tag-chip button:hover{ color:var(--danger); }
+  #tag-input{
+    border:1px dashed var(--border); border-radius:999px; background:none; padding:3px 10px;
+    font-size:11.5px; color:var(--text); outline:none; width:100px;
+  }
+  #tag-input:focus{ border-color:var(--accent); width:140px; }
+  .reviewed-row{ display:flex; align-items:center; gap:10px; margin:0 0 24px; font-size:11.5px; color:var(--muted); }
+
+  /* Tree indicators */
+  .status-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .status-dot.status-learning{ background:#9a9aa5; }
+  .status-dot.status-understood{ background:#3fa34d; }
+  .status-dot.status-review{ background:#e0a83a; }
+  .fav-indicator{ font-size:10px; flex-shrink:0; }
+
+  /* Copy code button */
+  .block-header-left{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .copy-btn{
+    background:var(--bg-elev); border:1px solid var(--border); border-radius:5px;
+    padding:2px 8px; font-size:11px; color:var(--muted); flex-shrink:0;
+  }
+  .copy-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .copy-btn.copied{ border-color:#3fa34d; color:#3fa34d; }
+
+  /* Storage usage */
+  .storage-info{ font-size:11px; color:var(--muted); padding:0 2px 2px; }
+  .storage-info.warn{ color:var(--danger); }
+
+  #pdf-render{
+    position:fixed; left:-10000px; top:0; width:760px; background:#fff; color:#111;
+    padding:20px; font-family:'IBM Plex Sans', sans-serif;
+  }
+  #pdf-render h1{ font-size:26px; margin:0 0 18px; }
+  #pdf-render h2{ font-size:21px; margin:22px 0 8px; border-top:1px solid #ddd; padding-top:14px; }
+  #pdf-render h3{ font-size:17px; margin:16px 0 6px; }
+  #pdf-render h4, h5, h6{ font-size:14px; margin:12px 0 6px; }
+  #pdf-render p{ font-size:13px; line-height:1.6; margin:0 0 8px; }
+  #pdf-render pre{ background:#1e1e24; padding:12px; border-radius:6px; overflow:hidden; margin:0 0 10px; }
+  #pdf-render pre code{ color:#e8e8ea; font-size:12px; }
+  #pdf-render img{ max-width:100%; border-radius:6px; margin:6px 0; page-break-inside:avoid; }
+  #pdf-render pre{ page-break-inside:avoid; }
+  #pdf-render pre code{ font-family:'IBM Plex Mono', ui-monospace, monospace; white-space:pre-wrap; word-break:break-word; }
+  .pdf-caption{ font-size:11px; color:#777; margin:-2px 0 10px; }
+  .pdf-meta{ font-size:10.5px; color:#888; margin:-6px 0 12px; }
+
+  @media (max-width: 760px){
+    #menu-toggle{ display:inline-flex; align-items:center; justify-content:center; }
+    #sidebar{
+      position:fixed; z-index:20; height:100%; max-width:85vw; transform:translateX(-100%);
+      box-shadow:2px 0 16px rgba(0,0,0,.15);
+    }
+    #app.sidebar-open #sidebar{ transform:translateX(0); }
+    #note-view{ padding:70px 18px 100px; }
+    #note-title{ font-size:24px; }
+    #review-bar{ padding-left:56px; flex-wrap:wrap; row-gap:6px; }
+    .toolbar-actions{ width:100%; }
+  }
+
+  /* Review bar */
+  #review-bar{
+    position:sticky; top:0; z-index:6; display:flex; align-items:center; justify-content:space-between;
+    gap:10px; background:var(--accent); color:var(--accent-ink); padding:9px 18px; font-size:12.5px;
+  }
+  #review-bar-label{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .review-bar-actions{ display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+  .review-bar-actions button{
+    background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35); border-radius:6px;
+    padding:5px 10px; font-size:11.5px; color:var(--accent-ink);
+  }
+  .review-bar-actions button:hover:not(:disabled){ background:rgba(255,255,255,.28); }
+  .review-bar-actions button:disabled{ opacity:.4; cursor:default; }
+
+  /* Modals (quick capture / review list) */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center;
+    justify-content:center; z-index:50; padding:20px;
+  }
+  .modal-card{
+    background:var(--bg-elev); border-radius:10px; padding:20px; width:380px; max-width:100%;
+    box-shadow:0 10px 40px rgba(0,0,0,.25);
+  }
+  .modal-title{ margin:0 0 12px; font-size:16px; font-weight:600; }
+  #qc-title{
+    width:100%; margin-bottom:8px; padding:8px 10px; border:1px solid var(--border);
+    border-radius:7px; background:var(--bg); font-size:14px; color:var(--text); outline:none;
+  }
+  #qc-title:focus{ border-color:var(--accent); }
+  #qc-text{
+    width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:7px;
+    background:var(--bg); color:var(--text); font-size:13.5px; font-family:inherit; resize:vertical; outline:none;
+  }
+  #qc-text:focus{ border-color:var(--accent); }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+  .btn-primary{
+    padding:7px 14px; border:1px solid var(--accent); border-radius:7px;
+    background:var(--accent); color:var(--accent-ink); font-size:13px;
+  }
+  .btn-primary:hover{ opacity:.9; }
+
+  .review-list{ max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:5px; }
+  .review-item{
+    display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px;
+    border:1px solid var(--border); border-radius:7px; font-size:13px; cursor:pointer;
+  }
+  .review-item:hover{ border-color:var(--accent); }
+  .review-item span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .review-empty{ font-size:13px; color:var(--muted); padding:10px 2px; }
+
+  /* Fullscreen image viewer */
+  .image-viewer{ background:rgba(10,10,12,.9); cursor:zoom-out; }
+  .image-viewer img{ max-width:92vw; max-height:92vh; border-radius:8px; cursor:default; }
+  .image-viewer-close{
+    position:absolute; top:18px; right:22px; background:none; border:1px solid rgba(255,255,255,.4);
+    color:#fff; width:36px; height:36px; border-radius:8px; font-size:16px;
+  }
+  .image-viewer-close:hover{ background:rgba(255,255,255,.12); }
+  .note-image{ cursor:zoom-in; }
+
+  /* Brand / logo */
+  .brand{ display:flex; align-items:center; gap:9px; min-width:0; }
+  .logo{ flex-shrink:0; display:block; }
+  .logo .bg{ fill:var(--accent); }
+  .logo .fold{ fill:var(--accent-ink); opacity:.35; }
+  .logo .edge{ stroke:var(--accent-ink); opacity:.85; fill:none; stroke-width:1.2; stroke-linecap:round; }
+  .logo .node{ fill:var(--accent-ink); }
+
+  /* Favorites filter + recent notes */
+  .filter-row{ padding:0 16px 8px; }
+  .chip-btn{
+    padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:var(--bg);
+    font-size:12px; color:var(--muted);
+  }
+  .chip-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .chip-btn.active{ border-color:#d9a441; color:#d9a441; }
+  .recent{ padding:0 8px 6px; }
+  .recent-title, .related-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .recent-title{ padding:2px 8px 4px; }
+  .recent-row{
+    padding:4px 8px; border-radius:6px; font-size:12.5px; cursor:pointer;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .recent-row:hover{ background:var(--hover); }
+  .recent-row.active{ background:var(--hover); color:var(--accent); font-weight:500; }
+  .tree-empty{ padding:10px 8px; font-size:12.5px; color:var(--muted); }
+
+  /* Related notes */
+  .related-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 24px; }
+  .related-list{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .related-chip .related-link{ cursor:pointer; }
+  .related-chip .related-link:hover{ color:var(--accent); }
+  .related-empty{ font-size:11.5px; color:var(--muted); }
+  #related-search{
+    width:100%; margin-bottom:8px; padding:8px 10px; border:1px solid var(--border);
+    border-radius:7px; background:var(--bg); font-size:14px; color:var(--text); outline:none;
+  }
+  #related-search:focus{ border-color:var(--accent); }
+  .review-item small{ color:var(--muted); font-size:11px; flex-shrink:0; }
+
+  /* Save status */
+  .save-status{
+    position:fixed; right:16px; bottom:14px; z-index:30; padding:4px 11px; border-radius:999px;
+    font-size:11.5px; border:1px solid var(--border); background:var(--bg-elev); color:var(--muted);
+    cursor:default; transition:opacity .4s;
+  }
+  .save-status.idle{ opacity:.55; }
+  .save-status.failed{ border-color:var(--danger); color:var(--danger); cursor:pointer; opacity:1; font-weight:500; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <path class="bg" d="M4 3.5A1.5 1.5 0 0 1 5.5 2H15l5 5v14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 21.5z"/>
+          <path class="fold" d="M15 2v5h5z"/>
+          <path class="edge" d="M8 11.5L12 14.5M8 17.5L12 14.5M12 14.5L16 11.5M12 14.5L16 17.5"/>
+          <circle class="node" cx="8" cy="11.5" r="1.6"/><circle class="node" cx="8" cy="17.5" r="1.6"/>
+          <circle class="node" cx="12" cy="14.5" r="1.8"/>
+          <circle class="node" cx="16" cy="11.5" r="1.6"/><circle class="node" cx="16" cy="17.5" r="1.6"/>
+        </svg>
+        <h1>ML Notes</h1>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button id="quick-capture-btn" title="Quick capture (new note)">⚡</button>
+        <button id="theme-toggle" title="Toggle theme">◐</button>
+      </div>
+    </div>
+    <input id="search" placeholder="Search… (Ctrl/Cmd+K)" autocomplete="off">
+    <div class="filter-row">
+      <button id="fav-filter-btn" class="chip-btn" type="button" aria-pressed="false" title="Show only starred notes">☆ Favorites</button>
+    </div>
+    <div id="recent" class="recent" hidden>
+      <div class="recent-title">Recent</div>
+      <div id="recent-list"></div>
+    </div>
+    <div id="tree"></div>
+    <button id="add-root-btn">+ New section</button>
+    <div class="sidebar-footer">
+      <div id="storage-info" class="storage-info"></div>
+      <button id="review-btn">🔁 Review queue <span id="review-count" class="badge"></span></button>
+      <button id="export-all-btn">⬇ Export all (PDF)</button>
+      <button id="backup-btn">⬇ Download backup (JSON)</button>
+      <label class="file-label" for="restore-input">↑ Restore backup</label>
+      <input type="file" id="restore-input" accept=".json" hidden>
+    </div>
+  </aside>
+  <main id="main">
+    <button id="menu-toggle" style="position:fixed; top:14px; left:14px; z-index:21; background:var(--bg-elev); border:1px solid var(--border); border-radius:7px; width:34px; height:34px;">☰</button>
+    <div id="review-bar" hidden>
+      <span id="review-bar-label"></span>
+      <div class="review-bar-actions">
+        <button id="review-mark">✓ Mark reviewed</button>
+        <button id="review-prev">‹ Prev</button>
+        <button id="review-next">Next ›</button>
+        <button id="review-exit">Exit</button>
+      </div>
+    </div>
+    <div id="empty-state">Select a section on the left, or create a new one to get started.</div>
+    <div id="note-view" hidden>
+      <div class="note-toolbar">
+        <input id="note-title" placeholder="Untitled">
+        <div class="toolbar-actions">
+          <button id="export-note-btn" title="Exports this section and all its sub-sections as one PDF">Export PDF</button>
+          <button id="gdrive-save-btn" type="button" title="Save this note as a JSON file in the &quot;ML Notes&quot; folder of your Google Drive">Save to Google Drive</button>
+          <button id="delete-note-btn">Delete</button>
+        </div>
+        <div class="gdrive-row">
+          <span id="gdrive-conn" class="gdrive-conn">Google Drive: Not connected</span>
+          <span id="gdrive-result" class="gdrive-result" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+      <div class="note-meta">
+        <button id="favorite-toggle" class="fav-toggle" title="Toggle favorite">☆</button>
+        <select id="status-select" title="Learning status">
+          <option value="learning">Learning</option>
+          <option value="understood">Understood</option>
+          <option value="review">Review</option>
+        </select>
+        <div id="tags-row" class="tags-row"></div>
+      </div>
+      <div class="reviewed-row">
+        <span id="reviewed-info" class="reviewed-info"></span>
+        <button id="mark-reviewed-btn" class="btn-small">Mark reviewed</button>
+      </div>
+      <div class="related-row">
+        <span class="related-label">Related</span>
+        <div id="related-list" class="related-list"></div>
+        <button id="add-related-btn" class="btn-small" type="button">+ Link note</button>
+      </div>
+      <div id="blocks"></div>
+      <div class="add-block-row">
+        <button data-type="text">+ Text</button>
+        <button data-type="code">+ Code</button>
+        <button data-type="image">+ Image</button>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="pdf-render"></div>
+
+<div id="quick-capture-modal" class="modal-overlay" hidden>
+  <div class="modal-card">
+    <h2 class="modal-title">Quick capture</h2>
+    <input id="qc-title" placeholder="Title" autocomplete="off">
+    <textarea id="qc-text" placeholder="Write a quick note… (optional)" rows="5"></textarea>
+    <div class="modal-actions">
+      <button id="qc-cancel" class="btn-small">Cancel</button>
+      <button id="qc-save" class="btn-primary">Save note</button>
+    </div>
+  </div>
+</div>
+
+<div id="review-modal" class="modal-overlay" hidden>
+  <div class="modal-card">
+    <h2 class="modal-title">Review queue</h2>
+    <div id="review-list" class="review-list"></div>
+    <div class="modal-actions">
+      <button id="review-modal-close" class="btn-small">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="related-modal" class="modal-overlay" hidden>
+  <div class="modal-card">
+    <h2 class="modal-title">Link a related note</h2>
+    <input id="related-search" placeholder="Search notes…" autocomplete="off">
+    <div id="related-options" class="review-list"></div>
+    <div class="modal-actions">
+      <button id="related-close" class="btn-small">Close</button>
+    </div>
+  </div>
+</div>
+
+<button id="save-status" class="save-status" type="button" aria-live="polite" hidden></button>
+
+<div id="image-viewer" class="modal-overlay image-viewer" hidden>
+  <button id="image-viewer-close" class="image-viewer-close" title="Close (Esc)">✕</button>
+  <img id="image-viewer-img" src="" alt="">
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ==================== GOOGLE DRIVE CONFIG — edit this ====================
+  // Paste your OAuth 2.0 "Web application" Client ID here (looks like
+  // 1234567890-abc123.apps.googleusercontent.com). NEVER put a client secret
+  // here: this browser-only app doesn't use one. See README.md for setup.
+  var GOOGLE_CLIENT_ID = '697840966548-v3qo3596uib6gl40rvhriq7d0e19vued.apps.googleusercontent.com';
+  var GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'; // minimum scope: only files this app creates
+  var GOOGLE_DRIVE_FOLDER_NAME = 'ML Notes';
+  // =========================================================================
+
+  // Defensive polyfill for older WebKit builds that lack NodeList.forEach —
+  // no effect on modern browsers, prevents a single missing method from
+  // breaking event wiring for the whole app.
+  if(window.NodeList && !NodeList.prototype.forEach){
+    NodeList.prototype.forEach = Array.prototype.forEach;
+  }
+  var STORAGE_KEY = 'ml-notes-store-v1';
+  var THEME_KEY = 'ml-notes-theme';
+  var RECENT_KEY = 'ml-notes-recent-v1'; // only a short list of note ids, kept apart from the notes data
+  var MAX_RECENT = 5;
+  var CODE_LANGS = [
+    ['python','Python'],['javascript','JavaScript'],['java','Java'],['c','C'],['cpp','C++'],
+    ['csharp','C#'],['go','Go'],['rust','Rust'],['sql','SQL'],['bash','Bash / Shell'],
+    ['json','JSON'],['xml','HTML / XML'],['yaml','YAML'],['plaintext','Plain text']
+  ];
+
+  var STATUS_VALUES = ['learning', 'understood', 'review'];
+  var STORAGE_ASSUMED_CAP = 5 * 1024 * 1024; // ~5MB — a common (not guaranteed) localStorage quota
+
+  var store = null;
+  var searchQuery = '';
+  var favoritesOnly = false;
+  var recentIds = [];
+  var saveFailed = false;
+  var saveStatusTimer = null;
+  var editingBlocks = new Set();
+
+  function uid(prefix){
+    return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  }
+
+  // Fills in defaults for fields added after a node may have been created,
+  // so old notes/backups keep working without any migration step.
+  function normalizeNode(node){
+    if(!Array.isArray(node.tags)) node.tags = [];
+    if(typeof node.favorite !== 'boolean') node.favorite = false;
+    if(STATUS_VALUES.indexOf(node.status) === -1) node.status = 'learning';
+    if(typeof node.lastReviewed !== 'number') node.lastReviewed = null;
+    if(!Array.isArray(node.related)) node.related = [];
+    if(typeof node.googleDriveFileId !== 'string' || !node.googleDriveFileId) node.googleDriveFileId = null;
+    if(typeof node.googleDriveSavedAt !== 'number') node.googleDriveSavedAt = null;
+    return node;
+  }
+
+  function touchReviewed(node){
+    if(!node) return;
+    node.lastReviewed = Date.now();
+  }
+
+  function formatReviewedDate(ts){
+    if(!ts) return 'not yet reviewed';
+    try{
+      return new Date(ts).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+    }catch(e){ return 'not yet reviewed'; }
+  }
+
+  function normalizeStore(data){
+    if(data && data.nodes){
+      Object.keys(data.nodes).forEach(function(id){ normalizeNode(data.nodes[id]); });
+      // drop links to notes that no longer exist, and duplicates
+      Object.keys(data.nodes).forEach(function(id){
+        var n = data.nodes[id];
+        n.related = n.related.filter(function(rid, i){
+          return rid !== id && data.nodes[rid] && n.related.indexOf(rid) === i;
+        });
+      });
+    }
+    return data;
+  }
+
+  function statusLabel(status){
+    if(status === 'understood') return 'Understood';
+    if(status === 'review') return 'Review';
+    return 'Learning';
+  }
+
+  // Wraps localStorage access so a browser that blocks/throws on storage
+  // (private modes, some file:// contexts, disabled storage) never crashes init().
+  function safeStorageGet(key){
+    try{ return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function safeStorageSet(key, value){
+    try{ localStorage.setItem(key, value); return true; } catch(e){ console.error('Storage write failed:', e); return false; }
+  }
+
+  function setSaveStatus(state){
+    var el = document.getElementById('save-status');
+    if(!el) return;
+    clearTimeout(saveStatusTimer);
+    el.hidden = false;
+    if(state === 'failed'){
+      el.className = 'save-status failed';
+      el.textContent = '⚠ Save failed — click to download a backup';
+      el.title = 'Your latest changes are still on screen but could not be written to browser storage.';
+    } else {
+      el.className = 'save-status';
+      el.textContent = 'Saved ✓';
+      el.title = '';
+      saveStatusTimer = setTimeout(function(){ el.classList.add('idle'); }, 2500);
+    }
+  }
+
+  // Returns true if the notes were written to localStorage. On failure the notes
+  // stay in memory, a red status is shown, and the next save retries automatically.
+  function save(){
+    var ok = safeStorageSet(STORAGE_KEY, JSON.stringify(store));
+    var wasFailed = saveFailed;
+    saveFailed = !ok;
+    setSaveStatus(ok ? 'saved' : 'failed');
+    if(!ok && !wasFailed){
+      try{ alert('Could not save to browser storage (it may be full or blocked).\n\nYour latest changes are still on screen. Click "Save failed" at the bottom-right to download a backup now.'); }catch(e){}
+    }
+    updateStorageIndicator();
+    updateReviewBadge();
+    return ok;
+  }
+
+  /* ---------- Recent notes (short id list, separate from the notes data) ---------- */
+
+  function loadRecent(){
+    try{
+      var arr = JSON.parse(safeStorageGet(RECENT_KEY) || '[]');
+      recentIds = Array.isArray(arr) ? arr.filter(function(x){ return typeof x === 'string'; }).slice(0, MAX_RECENT) : [];
+    }catch(e){ recentIds = []; }
+  }
+
+  function markEdited(id){
+    if(!id) return;
+    if(recentIds[0] !== id){
+      recentIds = [id].concat(recentIds.filter(function(x){ return x !== id; })).slice(0, MAX_RECENT);
+      safeStorageSet(RECENT_KEY, JSON.stringify(recentIds));
+    }
+    renderRecent();
+  }
+
+  function renderRecent(){
+    var box = document.getElementById('recent');
+    var list = document.getElementById('recent-list');
+    if(!box || !list || !store) return;
+    list.innerHTML = '';
+    var items = recentIds.filter(function(id){ return store.nodes[id]; });
+    box.hidden = !items.length || !!searchQuery.trim() || favoritesOnly;
+    items.forEach(function(id){
+      var row = document.createElement('div');
+      row.className = 'recent-row' + (id === store.selectedId ? ' active' : '');
+      row.textContent = store.nodes[id].title || 'Untitled';
+      row.title = row.textContent;
+      row.onclick = function(){ selectNode(id); };
+      list.appendChild(row);
+    });
+  }
+
+  function updateStorageIndicator(){
+    var el = document.getElementById('storage-info');
+    if(!el) return;
+    var raw = safeStorageGet(STORAGE_KEY) || '';
+    var bytes = new Blob([raw]).size;
+    var pct = Math.round((bytes / STORAGE_ASSUMED_CAP) * 100);
+    var kb = bytes / 1024;
+    var sizeLabel = kb > 1024 ? (kb / 1024).toFixed(2) + ' MB' : Math.round(kb) + ' KB';
+    var text = 'Storage: ' + sizeLabel + ' (~' + Math.min(pct, 999) + '% of typical limit)';
+    if(pct >= 80) text += ' — back up soon';
+    el.textContent = text;
+    el.classList.toggle('warn', pct >= 80);
+  }
+
+  function loadStore(){
+    var raw = safeStorageGet(STORAGE_KEY);
+    if(!raw) return null;
+    try{ return normalizeStore(JSON.parse(raw)); } catch(e){ return null; }
+  }
+
+  function makeWelcomeStore(){
+    var id = uid('n');
+    var block = {
+      id: uid('b'),
+      type: 'text',
+      text: "# Welcome to ML Notes\n\nUse the sidebar to create **sections** and nest **sub-sections** inside them for topics like Linear Regression, CNNs, or Transformers.\n\nEach section can hold its own content:\n- Text blocks for theory (supports #, ##, ###, **bold**, *italic*, `code`, and - lists)\n- Code blocks with syntax highlighting\n- Image blocks for screenshots and diagrams\n\nEverything is saved to your browser automatically. Use *Export PDF* to print a section (with its sub-sections), or *Download backup* to save a JSON copy you can restore anywhere, including on a different device."
+    };
+    var nodes = {};
+    nodes[id] = { id:id, title:'Welcome', parentId:null, children:[], blocks:[block], collapsed:false, tags:[], favorite:false, status:'learning', lastReviewed:null, related:[] };
+    return { nodes: nodes, rootIds:[id], selectedId:id };
+  }
+
+  function fetchSeed(){
+    if(typeof fetch !== 'function') return Promise.resolve(null);
+    try{
+      return fetch('./notes-data.json').then(function(res){
+        if(!res.ok) return null;
+        return res.json();
+      }).then(function(data){
+        if(data && data.nodes && data.rootIds) return normalizeStore(data);
+        return null;
+      }).catch(function(){ return null; });
+    }catch(e){
+      return Promise.resolve(null);
+    }
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function inlineMd(s){
+    return s
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/`(.+?)`/g,'<code>$1</code>');
+  }
+
+  function mdToHtml(text){
+    if(!text) return '';
+    var lines = escapeHtml(text).split('\n');
+    var html = '', inList = false;
+    function closeList(){ if(inList){ html += '</ul>'; inList = false; } }
+    lines.forEach(function(line){
+      if(/^###\s+/.test(line)){ closeList(); html += '<h4>' + inlineMd(line.replace(/^###\s+/,'')) + '</h4>'; return; }
+      if(/^##\s+/.test(line)){ closeList(); html += '<h3>' + inlineMd(line.replace(/^##\s+/,'')) + '</h3>'; return; }
+      if(/^#\s+/.test(line)){ closeList(); html += '<h2>' + inlineMd(line.replace(/^#\s+/,'')) + '</h2>'; return; }
+      if(/^-\s+/.test(line)){ if(!inList){ html += '<ul>'; inList = true; } html += '<li>' + inlineMd(line.replace(/^-\s+/,'')) + '</li>'; return; }
+      closeList();
+      if(line.trim() === ''){ html += '<br>'; return; }
+      html += '<p>' + inlineMd(line) + '</p>';
+    });
+    closeList();
+    return html;
+  }
+
+  function autoresize(el){
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
+  }
+
+  /* ---------- Tree ---------- */
+
+  function nodeMatchesQuery(node, q){
+    if(node.title.toLowerCase().indexOf(q) !== -1) return true;
+    if(node.tags && node.tags.some(function(t){ return t.toLowerCase().indexOf(q) !== -1; })) return true;
+    return node.blocks.some(function(b){
+      if(b.type === 'text' && b.text && b.text.toLowerCase().indexOf(q) !== -1) return true;
+      if(b.type === 'code' && b.code && b.code.toLowerCase().indexOf(q) !== -1) return true;
+      if(b.type === 'image' && b.caption && b.caption.toLowerCase().indexOf(q) !== -1) return true;
+      return false;
+    });
+  }
+
+  function computeMatches(q, favOnly){
+    var matches = new Set();
+    Object.keys(store.nodes).forEach(function(id){
+      var n = store.nodes[id];
+      if(favOnly && !n.favorite) return;
+      if(q && !nodeMatchesQuery(n, q)) return;
+      matches.add(id);
+    });
+    var withAncestors = new Set(matches);
+    matches.forEach(function(id){
+      var p = store.nodes[id].parentId;
+      while(p){ withAncestors.add(p); p = store.nodes[p] ? store.nodes[p].parentId : null; }
+    });
+    return withAncestors;
+  }
+
+  function renderTree(){
+    var treeEl = document.getElementById('tree');
+    treeEl.innerHTML = '';
+    var q = searchQuery.trim().toLowerCase();
+    var matchSet = (q || favoritesOnly) ? computeMatches(q, favoritesOnly) : null;
+    var shown = 0;
+    store.rootIds.forEach(function(id){
+      var el = renderNodeEl(id, 0, matchSet);
+      if(el){ treeEl.appendChild(el); shown++; }
+    });
+    if(!shown && matchSet){
+      var empty = document.createElement('div');
+      empty.className = 'tree-empty';
+      empty.textContent = (favoritesOnly && !q) ? 'No favorites yet — star a note to see it here.' : 'No matching notes.';
+      treeEl.appendChild(empty);
+    }
+    renderRecent();
+  }
+
+  function toggleFavoritesFilter(){
+    favoritesOnly = !favoritesOnly;
+    var btn = document.getElementById('fav-filter-btn');
+    btn.classList.toggle('active', favoritesOnly);
+    btn.setAttribute('aria-pressed', favoritesOnly ? 'true' : 'false');
+    btn.textContent = (favoritesOnly ? '⭐' : '☆') + ' Favorites';
+    renderTree();
+  }
+
+  function renderNodeEl(id, depth, matchSet){
+    var node = store.nodes[id];
+    if(!node) return null;
+    if(matchSet && !matchSet.has(id)) return null;
+
+    var wrap = document.createElement('div');
+    wrap.className = 'tree-node';
+
+    var row = document.createElement('div');
+    row.className = 'tree-row' + (id === store.selectedId ? ' active' : '');
+    row.style.paddingLeft = (depth * 16 + 6) + 'px';
+
+    var hasChildren = node.children.length > 0;
+    var toggle = document.createElement('span');
+    toggle.className = 'toggle';
+    toggle.textContent = hasChildren ? ((node.collapsed && !matchSet) ? '▸' : '▾') : '';
+    toggle.onclick = function(e){
+      e.stopPropagation();
+      node.collapsed = !node.collapsed;
+      save(); renderTree();
+    };
+    row.appendChild(toggle);
+
+    var statusDot = document.createElement('span');
+    statusDot.className = 'status-dot status-' + (node.status || 'learning');
+    statusDot.title = 'Status: ' + statusLabel(node.status);
+    row.appendChild(statusDot);
+
+    if(node.favorite){
+      var favIndicator = document.createElement('span');
+      favIndicator.className = 'fav-indicator';
+      favIndicator.textContent = '⭐';
+      row.appendChild(favIndicator);
+    }
+
+    var titleSpan = document.createElement('span');
+    titleSpan.className = 'tree-title';
+    titleSpan.textContent = node.title || 'Untitled';
+    titleSpan.onclick = function(){ selectNode(id); };
+    titleSpan.ondblclick = function(){ renameNode(id); };
+    row.appendChild(titleSpan);
+
+    var actions = document.createElement('span');
+    actions.className = 'tree-actions';
+    var favBtn = document.createElement('button');
+    favBtn.textContent = node.favorite ? '⭐' : '☆'; favBtn.title = 'Toggle favorite';
+    favBtn.onclick = function(e){ e.stopPropagation(); toggleFavorite(id); };
+    var addBtn = document.createElement('button');
+    addBtn.textContent = '+'; addBtn.title = 'Add sub-section';
+    addBtn.onclick = function(e){ e.stopPropagation(); addChild(id); };
+    var delBtn = document.createElement('button');
+    delBtn.textContent = '×'; delBtn.title = 'Delete';
+    delBtn.onclick = function(e){ e.stopPropagation(); deleteNode(id); };
+    actions.appendChild(favBtn); actions.appendChild(addBtn); actions.appendChild(delBtn);
+    row.appendChild(actions);
+
+    wrap.appendChild(row);
+
+    if(hasChildren && (matchSet || !node.collapsed)){
+      var childrenWrap = document.createElement('div');
+      node.children.forEach(function(cid){
+        var childEl = renderNodeEl(cid, depth + 1, matchSet);
+        if(childEl) childrenWrap.appendChild(childEl);
+      });
+      wrap.appendChild(childrenWrap);
+    }
+    return wrap;
+  }
+
+  function selectNode(id){
+    store.selectedId = id;
+    save(); renderTree(); renderNoteView();
+    if(reviewSession && reviewSession.queue[reviewSession.index] !== id) exitReviewSession();
+    if(window.innerWidth <= 760) document.getElementById('app').classList.remove('sidebar-open');
+  }
+
+  function addChild(parentId){
+    var title = prompt('Section name:', 'New section');
+    if(!title) return;
+    var id = uid('n');
+    store.nodes[id] = { id:id, title:title, parentId:parentId, children:[], blocks:[], collapsed:false, tags:[], favorite:false, status:'learning', lastReviewed:null, related:[] };
+    markEdited(id);
+    if(parentId){
+      store.nodes[parentId].children.push(id);
+      store.nodes[parentId].collapsed = false;
+    } else {
+      store.rootIds.push(id);
+    }
+    store.selectedId = id;
+    save(); renderTree(); renderNoteView();
+  }
+
+  function renameNode(id){
+    var node = store.nodes[id];
+    var title = prompt('Rename section:', node.title);
+    if(title === null) return;
+    node.title = title.trim() || 'Untitled';
+    save(); renderTree(); renderNoteView();
+  }
+
+  function toggleFavorite(id){
+    var node = store.nodes[id];
+    if(!node) return;
+    node.favorite = !node.favorite;
+    save(); renderTree(); renderNoteView();
+  }
+
+  function unlinkAll(id){
+    Object.keys(store.nodes).forEach(function(k){
+      var n = store.nodes[k];
+      if(n.related && n.related.indexOf(id) !== -1){
+        n.related = n.related.filter(function(x){ return x !== id; });
+      }
+    });
+  }
+
+  function deleteNodeSilent(id){
+    var node = store.nodes[id];
+    if(!node) return;
+    node.children.slice().forEach(deleteNodeSilent);
+    unlinkAll(id);
+    delete store.nodes[id];
+    if(store.selectedId === id) store.selectedId = null;
+  }
+
+  function deleteNode(id){
+    var node = store.nodes[id];
+    if(!node) return;
+    if(!confirm('Delete "' + (node.title || 'Untitled') + '" and everything inside it?')) return;
+    node.children.slice().forEach(deleteNodeSilent);
+    if(node.parentId){
+      var parent = store.nodes[node.parentId];
+      parent.children = parent.children.filter(function(c){ return c !== id; });
+    } else {
+      store.rootIds = store.rootIds.filter(function(r){ return r !== id; });
+    }
+    unlinkAll(id);
+    delete store.nodes[id];
+    if(store.selectedId === id) store.selectedId = null;
+    save(); renderTree(); renderNoteView();
+  }
+
+  /* ---------- Note view / blocks ---------- */
+
+  function renderNoteView(){
+    var node = store.selectedId ? store.nodes[store.selectedId] : null;
+    var emptyState = document.getElementById('empty-state');
+    var noteView = document.getElementById('note-view');
+    if(!node){ emptyState.hidden = false; noteView.hidden = true; return; }
+    emptyState.hidden = true; noteView.hidden = false;
+
+    var titleInput = document.getElementById('note-title');
+    titleInput.value = node.title;
+    titleInput.oninput = function(){
+      node.title = titleInput.value;
+      markEdited(node.id);
+      save(); renderTree();
+    };
+
+    renderNoteMeta(node);
+    renderDriveInfo(node);
+
+    var blocksEl = document.getElementById('blocks');
+    blocksEl.innerHTML = '';
+    node.blocks.forEach(function(block, index){
+      blocksEl.appendChild(renderBlockEl(node, block, index));
+    });
+  }
+
+  function renderNoteMeta(node){
+    var favBtn = document.getElementById('favorite-toggle');
+    favBtn.textContent = node.favorite ? '⭐' : '☆';
+    favBtn.classList.toggle('active', !!node.favorite);
+    favBtn.onclick = function(){ toggleFavorite(node.id); };
+
+    var statusSelect = document.getElementById('status-select');
+    statusSelect.value = node.status || 'learning';
+    statusSelect.onchange = function(){
+      node.status = statusSelect.value;
+      markEdited(node.id);
+      save(); renderTree(); renderNoteMeta(node);
+    };
+
+    renderTagsRow(node);
+    renderRelated(node);
+
+    var reviewedInfo = document.getElementById('reviewed-info');
+    reviewedInfo.textContent = 'Last reviewed: ' + formatReviewedDate(node.lastReviewed);
+    var markBtn = document.getElementById('mark-reviewed-btn');
+    markBtn.onclick = function(){
+      touchReviewed(node);
+      save(); renderNoteMeta(node);
+    };
+  }
+
+  function renderTagsRow(node){
+    var row = document.getElementById('tags-row');
+    row.innerHTML = '';
+    (node.tags || []).forEach(function(tag, i){
+      var chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      var label = document.createElement('span');
+      label.textContent = tag;
+      var rm = document.createElement('button');
+      rm.textContent = '×'; rm.title = 'Remove tag';
+      rm.onclick = function(){
+        node.tags.splice(i, 1);
+        markEdited(node.id);
+        save(); renderTagsRow(node);
+      };
+      chip.appendChild(label); chip.appendChild(rm);
+      row.appendChild(chip);
+    });
+    var input = document.createElement('input');
+    input.type = 'text'; input.id = 'tag-input'; input.placeholder = '+ tag'; input.autocomplete = 'off';
+    input.onkeydown = function(e){
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      var val = input.value.trim();
+      if(val){
+        node.tags = node.tags || [];
+        if(node.tags.indexOf(val) === -1){ node.tags.push(val); markEdited(node.id); }
+        save();
+      }
+      renderTagsRow(node);
+      var refreshed = document.getElementById('tag-input');
+      if(refreshed) refreshed.focus();
+    };
+    row.appendChild(input);
+  }
+
+  /* ---------- Related notes (two-way manual links) ---------- */
+
+  function linkNotes(a, b){
+    if(a === b || !store.nodes[a] || !store.nodes[b]) return;
+    [[a, b], [b, a]].forEach(function(pair){
+      var n = store.nodes[pair[0]];
+      n.related = n.related || [];
+      if(n.related.indexOf(pair[1]) === -1) n.related.push(pair[1]);
+    });
+  }
+
+  function unlinkNotes(a, b){
+    [[a, b], [b, a]].forEach(function(pair){
+      var n = store.nodes[pair[0]];
+      if(n) n.related = (n.related || []).filter(function(x){ return x !== pair[1]; });
+    });
+  }
+
+  function renderRelated(node){
+    var list = document.getElementById('related-list');
+    list.innerHTML = '';
+    var shown = 0;
+    (node.related || []).forEach(function(rid){
+      var rn = store.nodes[rid];
+      if(!rn) return;
+      shown++;
+      var chip = document.createElement('span');
+      chip.className = 'tag-chip related-chip';
+      var link = document.createElement('span');
+      link.className = 'related-link'; link.textContent = rn.title || 'Untitled'; link.title = 'Open note';
+      link.onclick = function(){ selectNode(rid); };
+      var rm = document.createElement('button');
+      rm.type = 'button'; rm.textContent = '×'; rm.title = 'Remove link';
+      rm.onclick = function(){
+        unlinkNotes(node.id, rid);
+        markEdited(node.id);
+        save(); renderRelated(node);
+      };
+      chip.appendChild(link); chip.appendChild(rm);
+      list.appendChild(chip);
+    });
+    if(!shown){
+      var none = document.createElement('span');
+      none.className = 'related-empty'; none.textContent = 'none yet';
+      list.appendChild(none);
+    }
+  }
+
+  function renderRelatedOptions(){
+    var cur = store.nodes[store.selectedId];
+    var box = document.getElementById('related-options');
+    box.innerHTML = '';
+    if(!cur) return;
+    var q = document.getElementById('related-search').value.trim().toLowerCase();
+    var ids = Object.keys(store.nodes).filter(function(id){
+      if(id === cur.id || cur.related.indexOf(id) !== -1) return false;
+      return !q || (store.nodes[id].title || '').toLowerCase().indexOf(q) !== -1;
+    }).sort(function(a, b){
+      return (store.nodes[a].title || '').toLowerCase().localeCompare((store.nodes[b].title || '').toLowerCase());
+    }).slice(0, 60);
+    if(!ids.length){
+      var empty = document.createElement('div');
+      empty.className = 'review-empty';
+      empty.textContent = q ? 'No matching notes.' : 'No other notes to link yet.';
+      box.appendChild(empty);
+      return;
+    }
+    ids.forEach(function(id){
+      var n = store.nodes[id];
+      var item = document.createElement('div');
+      item.className = 'review-item';
+      var label = document.createElement('span');
+      label.textContent = n.title || 'Untitled';
+      item.appendChild(label);
+      if(n.parentId && store.nodes[n.parentId]){
+        var sub = document.createElement('small');
+        sub.textContent = 'in ' + (store.nodes[n.parentId].title || 'Untitled');
+        item.appendChild(sub);
+      }
+      item.onclick = function(){
+        linkNotes(cur.id, id);
+        markEdited(cur.id);
+        save(); renderRelated(cur); closeRelatedModal();
+      };
+      box.appendChild(item);
+    });
+  }
+
+  function openRelatedModal(){
+    if(!store.selectedId || !store.nodes[store.selectedId]) return;
+    document.getElementById('related-search').value = '';
+    renderRelatedOptions();
+    document.getElementById('related-modal').hidden = false;
+    requestAnimationFrame(function(){ document.getElementById('related-search').focus(); });
+  }
+
+  function closeRelatedModal(){ document.getElementById('related-modal').hidden = true; }
+
+  function moveBlock(node, index, dir){
+    var j = index + dir;
+    if(j < 0 || j >= node.blocks.length) return;
+    var tmp = node.blocks[index];
+    node.blocks[index] = node.blocks[j];
+    node.blocks[j] = tmp;
+    markEdited(node.id);
+    save(); renderNoteView();
+  }
+
+  function deleteBlock(node, index){
+    node.blocks.splice(index, 1);
+    markEdited(node.id);
+    save(); renderNoteView();
+  }
+
+  function labelFor(type){
+    if(type === 'text') return 'Text';
+    if(type === 'code') return 'Code';
+    if(type === 'image') return 'Image';
+    return type;
+  }
+
+  function makeControls(node, index){
+    var controls = document.createElement('span');
+    controls.className = 'block-controls';
+    var up = document.createElement('button'); up.textContent = '↑'; up.disabled = index === 0;
+    up.onclick = function(){ moveBlock(node, index, -1); };
+    var down = document.createElement('button'); down.textContent = '↓'; down.disabled = index === node.blocks.length - 1;
+    down.onclick = function(){ moveBlock(node, index, 1); };
+    var del = document.createElement('button'); del.textContent = '🗑';
+    del.onclick = function(){ deleteBlock(node, index); };
+    controls.appendChild(up); controls.appendChild(down); controls.appendChild(del);
+    return controls;
+  }
+
+  function renderBlockEl(node, block, index){
+    var card = document.createElement('div');
+    card.className = 'block block-' + block.type;
+
+    var header = document.createElement('div');
+    header.className = 'block-header';
+    var left = document.createElement('span');
+    left.className = 'block-header-left';
+    var typeLabel = document.createElement('span');
+    typeLabel.className = 'block-type';
+    typeLabel.textContent = labelFor(block.type);
+    left.appendChild(typeLabel);
+    if(block.type === 'code' && !editingBlocks.has(block.id)){
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn'; copyBtn.textContent = 'Copy';
+      copyBtn.onclick = function(){ copyCodeToClipboard(block.code, copyBtn); };
+      left.appendChild(copyBtn);
+    }
+    header.appendChild(left);
+    header.appendChild(makeControls(node, index));
+    card.appendChild(header);
+
+    var body = document.createElement('div');
+    body.className = 'block-body';
+
+    if(block.type === 'text'){
+      if(editingBlocks.has(block.id)){
+        var ta = document.createElement('textarea');
+        var textBefore = block.text;
+        ta.className = 'text-input'; ta.rows = 3; ta.value = block.text;
+        ta.oninput = function(){ block.text = ta.value; autoresize(ta); };
+        ta.onblur = function(){ editingBlocks.delete(block.id); if(block.text !== textBefore) markEdited(node.id); save(); renderNoteView(); };
+        body.appendChild(ta);
+        requestAnimationFrame(function(){ ta.focus(); autoresize(ta); });
+      } else {
+        var preview = document.createElement('div');
+        preview.className = 'text-preview';
+        preview.innerHTML = block.text ? mdToHtml(block.text) : '<span class="placeholder">Click to write notes…</span>';
+        preview.onclick = function(){ editingBlocks.add(block.id); renderNoteView(); };
+        body.appendChild(preview);
+      }
+    } else if(block.type === 'code'){
+      if(editingBlocks.has(block.id)){
+        var wrap = document.createElement('div');
+        wrap.className = 'code-edit';
+        var select = document.createElement('select');
+        CODE_LANGS.forEach(function(pair){
+          var opt = document.createElement('option');
+          opt.value = pair[0]; opt.textContent = pair[1];
+          if(block.lang === pair[0]) opt.selected = true;
+          select.appendChild(opt);
+        });
+        select.onchange = function(){ block.lang = select.value; };
+        var cta = document.createElement('textarea');
+        var codeBefore = block.code + '|' + block.lang;
+        cta.className = 'code-input'; cta.rows = 6; cta.value = block.code; cta.spellcheck = false;
+        cta.oninput = function(){ block.code = cta.value; autoresize(cta); };
+        var doneBtn = document.createElement('button');
+        doneBtn.className = 'btn-small'; doneBtn.textContent = 'Done';
+        doneBtn.onclick = function(){ editingBlocks.delete(block.id); if(block.code + '|' + block.lang !== codeBefore) markEdited(node.id); save(); renderNoteView(); };
+        wrap.appendChild(select); wrap.appendChild(cta); wrap.appendChild(doneBtn);
+        body.appendChild(wrap);
+        requestAnimationFrame(function(){ cta.focus(); autoresize(cta); });
+      } else {
+        var pre = document.createElement('pre');
+        var codeEl = document.createElement('code');
+        codeEl.className = 'language-' + (block.lang || 'plaintext');
+        codeEl.textContent = block.code || '// click to add code';
+        pre.appendChild(codeEl);
+        pre.onclick = function(){ editingBlocks.add(block.id); renderNoteView(); };
+        body.appendChild(pre);
+        if(window.hljs){ try{ hljs.highlightElement(codeEl); }catch(e){} }
+      }
+    } else if(block.type === 'image'){
+      if(block.src){
+        var img = document.createElement('img');
+        img.className = 'note-image'; img.src = block.src;
+        img.title = 'Click to view fullscreen';
+        img.onclick = function(){ openImageViewer(block.src); };
+        body.appendChild(img);
+        var cap = document.createElement('input');
+        cap.type = 'text'; cap.className = 'caption-input'; cap.placeholder = 'Caption (optional)';
+        cap.value = block.caption || '';
+        var capBefore = cap.value;
+        cap.oninput = function(){ block.caption = cap.value; };
+        cap.onblur = function(){ if(cap.value !== capBefore) markEdited(node.id); save(); };
+        body.appendChild(cap);
+        var replaceBtn = document.createElement('button');
+        replaceBtn.className = 'btn-small'; replaceBtn.textContent = 'Replace image';
+        replaceBtn.style.marginTop = '6px';
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.hidden = true;
+        fileInput.onchange = function(e){ if(e.target.files[0]) handleImageUpload(node, block, e.target.files[0]); };
+        replaceBtn.onclick = function(){ fileInput.click(); };
+        body.appendChild(replaceBtn); body.appendChild(fileInput);
+      } else {
+        var fi = document.createElement('input');
+        fi.type = 'file'; fi.accept = 'image/*';
+        fi.onchange = function(e){ if(e.target.files[0]) handleImageUpload(node, block, e.target.files[0]); };
+        body.appendChild(fi);
+      }
+    }
+
+    card.appendChild(body);
+    return card;
+  }
+
+  function addBlock(type){
+    var node = store.selectedId ? store.nodes[store.selectedId] : null;
+    if(!node) return;
+    var id = uid('b');
+    var block;
+    if(type === 'text') block = { id:id, type:'text', text:'' };
+    else if(type === 'code') block = { id:id, type:'code', code:'', lang:'python' };
+    else block = { id:id, type:'image', src:'', caption:'' };
+    node.blocks.push(block);
+    if(type !== 'image') editingBlocks.add(id);
+    markEdited(node.id);
+    save(); renderNoteView();
+  }
+
+  function compressImage(dataUrl, maxWidth, quality){
+    return new Promise(function(resolve){
+      var img = new Image();
+      img.onload = function(){
+        var w = img.width, h = img.height;
+        if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = function(){ resolve(dataUrl); };
+      img.src = dataUrl;
+    });
+  }
+
+  function handleImageUpload(node, block, file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      compressImage(e.target.result, 1000, 0.82).then(function(dataUrl){
+        block.src = dataUrl;
+        markEdited(node.id);
+        save(); renderNoteView();
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function copyCodeToClipboard(code, btn){
+    var showCopied = function(){
+      var original = btn.textContent;
+      btn.textContent = 'Copied'; btn.classList.add('copied'); btn.disabled = true;
+      setTimeout(function(){ btn.textContent = original; btn.classList.remove('copied'); btn.disabled = false; }, 1200);
+    };
+    var fallbackCopy = function(){
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = code || ''; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showCopied();
+      }catch(e){}
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code || '').then(showCopied).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  /* ---------- PDF export ---------- */
+
+  function renderNodeForPdf(id, depth, container){
+    var node = store.nodes[id];
+    if(!node) return;
+    var heading = document.createElement('h' + Math.min(depth + 1, 6));
+    heading.textContent = (node.favorite ? '★ ' : '') + (node.title || 'Untitled');
+    container.appendChild(heading);
+
+    var metaParts = ['Status: ' + statusLabel(node.status)];
+    if(node.tags && node.tags.length) metaParts.push('Tags: ' + node.tags.join(', '));
+    var meta = document.createElement('div');
+    meta.className = 'pdf-meta';
+    meta.textContent = metaParts.join('   ·   ');
+    container.appendChild(meta);
+
+    node.blocks.forEach(function(b){
+      if(b.type === 'text'){
+        var div = document.createElement('div');
+        div.innerHTML = mdToHtml(b.text);
+        container.appendChild(div);
+      } else if(b.type === 'code'){
+        var pre = document.createElement('pre');
+        var code = document.createElement('code');
+        code.textContent = b.code;
+        code.className = 'language-' + (b.lang || 'plaintext');
+        pre.appendChild(code);
+        container.appendChild(pre);
+        if(window.hljs){ try{ hljs.highlightElement(code); }catch(e){} }
+      } else if(b.type === 'image'){
+        if(b.src){
+          var img = document.createElement('img');
+          img.src = b.src;
+          container.appendChild(img);
+        }
+        if(b.caption){
+          var cap = document.createElement('div');
+          cap.className = 'pdf-caption';
+          cap.textContent = b.caption;
+          container.appendChild(cap);
+        }
+      }
+    });
+    node.children.forEach(function(cid){ renderNodeForPdf(cid, depth + 1, container); });
+  }
+
+  function runPdfExport(filename){
+    var container = document.getElementById('pdf-render');
+    return html2pdf().set({
+      margin: 14,
+      filename: filename,
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'pt', format: 'a4' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['img', 'pre', 'h1', 'h2', 'h3', 'h4'] }
+    }).from(container).toPdf().get('pdf').then(function(pdf){
+      var totalPages = pdf.internal.getNumberOfPages();
+      var pageW = pdf.internal.pageSize.getWidth();
+      var pageH = pdf.internal.pageSize.getHeight();
+      for(var i = 1; i <= totalPages; i++){
+        pdf.setPage(i);
+        pdf.setFontSize(8.5);
+        pdf.setTextColor(150);
+        pdf.text(String(i) + ' / ' + totalPages, pageW - 40, pageH - 18, { align: 'right' });
+      }
+    }).save();
+  }
+
+  function exportNotePdf(id){
+    var node = store.nodes[id];
+    if(!node) return;
+    var container = document.getElementById('pdf-render');
+    container.innerHTML = '';
+    renderNodeForPdf(id, 0, container);
+    runPdfExport((node.title || 'note').replace(/[^a-z0-9\-_ ]/gi,'').trim() + '.pdf');
+  }
+
+  function exportAllPdf(){
+    var container = document.getElementById('pdf-render');
+    container.innerHTML = '';
+    var h1 = document.createElement('h1');
+    h1.textContent = 'ML Notes';
+    container.appendChild(h1);
+    store.rootIds.forEach(function(id){ renderNodeForPdf(id, 0, container); });
+    runPdfExport('ml-notes.pdf');
+  }
+
+  /* ---------- Backup / restore ---------- */
+
+  function downloadBackup(){
+    var blob = new Blob([JSON.stringify(store, null, 2)], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'ml-notes-backup.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleRestore(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var data = JSON.parse(ev.target.result);
+        if(data && data.nodes && data.rootIds){
+          if(confirm('Restoring will replace all current notes in this browser. Continue?')){
+            store = normalizeStore(data);
+            store.selectedId = store.rootIds[0] || null;
+            save(); renderTree(); renderNoteView();
+          }
+        } else {
+          alert('This file does not look like a valid ML Notes backup.');
+        }
+      }catch(err){ alert('Could not read that file.'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  /* ---------- Review queue ---------- */
+
+  function getReviewQueue(){
+    return Object.keys(store.nodes).filter(function(id){ return store.nodes[id].status === 'review'; });
+  }
+
+  function updateReviewBadge(){
+    var el = document.getElementById('review-count');
+    if(!el) return;
+    var count = getReviewQueue().length;
+    el.textContent = count > 0 ? String(count) : '';
+  }
+
+  function openReviewModal(){
+    var list = document.getElementById('review-list');
+    list.innerHTML = '';
+    var queue = getReviewQueue();
+    if(queue.length === 0){
+      var empty = document.createElement('div');
+      empty.className = 'review-empty';
+      empty.textContent = 'No notes are marked Review right now.';
+      list.appendChild(empty);
+    } else {
+      queue.forEach(function(id, i){
+        var node = store.nodes[id];
+        var item = document.createElement('div');
+        item.className = 'review-item';
+        var label = document.createElement('span');
+        label.textContent = node.title || 'Untitled';
+        var openBtn = document.createElement('button');
+        openBtn.className = 'btn-small'; openBtn.textContent = 'Open';
+        item.appendChild(label); item.appendChild(openBtn);
+        item.onclick = function(){ startReviewSession(queue, i); closeReviewModal(); };
+        list.appendChild(item);
+      });
+    }
+    document.getElementById('review-modal').hidden = false;
+  }
+
+  function closeReviewModal(){ document.getElementById('review-modal').hidden = true; }
+
+  var reviewSession = null; // { queue: [ids], index: n }
+
+  function startReviewSession(queue, index){
+    reviewSession = { queue: queue, index: index };
+    selectNode(queue[index]);
+    renderReviewBar();
+  }
+
+  function exitReviewSession(){
+    reviewSession = null;
+    renderReviewBar();
+  }
+
+  function reviewStep(dir){
+    if(!reviewSession) return;
+    var next = reviewSession.index + dir;
+    if(next < 0 || next >= reviewSession.queue.length) return;
+    reviewSession.index = next;
+    selectNode(reviewSession.queue[next]);
+    renderReviewBar();
+  }
+
+  function renderReviewBar(){
+    var bar = document.getElementById('review-bar');
+    if(!reviewSession){ bar.hidden = true; return; }
+    var node = store.nodes[reviewSession.queue[reviewSession.index]];
+    if(!node){ exitReviewSession(); return; }
+    bar.hidden = false;
+    document.getElementById('review-bar-label').textContent =
+      'Reviewing ' + (reviewSession.index + 1) + ' / ' + reviewSession.queue.length + ' — ' + (node.title || 'Untitled');
+    document.getElementById('review-prev').disabled = reviewSession.index === 0;
+    document.getElementById('review-next').disabled = reviewSession.index === reviewSession.queue.length - 1;
+  }
+
+  /* ---------- Quick capture ---------- */
+
+  function openQuickCapture(){
+    document.getElementById('qc-title').value = '';
+    document.getElementById('qc-text').value = '';
+    document.getElementById('quick-capture-modal').hidden = false;
+    requestAnimationFrame(function(){ document.getElementById('qc-title').focus(); });
+  }
+
+  function closeQuickCapture(){
+    document.getElementById('quick-capture-modal').hidden = true;
+  }
+
+  function saveQuickCapture(){
+    var title = document.getElementById('qc-title').value.trim() || 'Quick note';
+    var text = document.getElementById('qc-text').value.trim();
+    var id = uid('n');
+    var blocks = [];
+    if(text) blocks.push({ id: uid('b'), type: 'text', text: text });
+    store.nodes[id] = {
+      id: id, title: title, parentId: null, children: [], blocks: blocks, collapsed: false,
+      tags: [], favorite: false, status: 'learning', lastReviewed: null, related: []
+    };
+    markEdited(id);
+    store.rootIds.push(id);
+    store.selectedId = id;
+    save(); renderTree(); renderNoteView();
+    closeQuickCapture();
+  }
+
+  /* ---------- Fullscreen image viewer ---------- */
+
+  function openImageViewer(src){
+    var img = document.getElementById('image-viewer-img');
+    img.src = src;
+    document.getElementById('image-viewer').hidden = false;
+  }
+
+  function closeImageViewer(){
+    document.getElementById('image-viewer').hidden = true;
+    document.getElementById('image-viewer-img').src = '';
+  }
+
+  /* ---------- Keyboard shortcuts ---------- */
+
+  function isOpen(id){ var el = document.getElementById(id); return !!el && !el.hidden; }
+
+  // Closes the top-most open overlay; returns true if something was closed.
+  function closeTopOverlay(){
+    if(isOpen('image-viewer')){ closeImageViewer(); return true; }
+    if(isOpen('related-modal')){ closeRelatedModal(); return true; }
+    if(isOpen('quick-capture-modal')){ closeQuickCapture(); return true; }
+    if(isOpen('review-modal')){ closeReviewModal(); return true; }
+    return false;
+  }
+
+  function handleGlobalKeydown(e){
+    if(e.isComposing) return;
+    var mod = e.ctrlKey || e.metaKey;
+    var k = (e.key || '').toLowerCase();
+    if(mod && k === 'k'){
+      e.preventDefault();
+      if(isOpen('image-viewer') || isOpen('quick-capture-modal') || isOpen('review-modal') || isOpen('related-modal')) return;
+      var search = document.getElementById('search');
+      if(window.innerWidth <= 760) document.getElementById('app').classList.add('sidebar-open');
+      search.focus(); search.select();
+      return;
+    }
+    if(mod && k === 's'){
+      e.preventDefault();
+      save();
+      return;
+    }
+    if(e.key === 'Escape'){
+      if(closeTopOverlay()) return;
+      var app = document.getElementById('app');
+      if(app.classList.contains('sidebar-open')) app.classList.remove('sidebar-open');
+    }
+  }
+
+  /* ---------- Google Drive: manual "Save to Google Drive" for the selected note ----------
+     Phase 1 only: localStorage stays the working storage; Drive is an extra copy.
+     No backend, no client secret, and the access token lives in memory only. */
+
+  var driveToken = null;          // OAuth access token — memory only, never written to localStorage
+  var driveTokenExpiresAt = 0;
+  var driveTokenClient = null;
+  var drivePendingAuth = null;    // { resolve, reject } while the Google popup is open
+  var driveFolderId = null;       // "ML Notes" folder id, cached for this page session only
+  var driveBusy = false;
+  var driveJobNodeId = null;
+  var driveExpiryTimer = null;
+
+  function driveConfigured(){
+    return !!GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID';
+  }
+
+  function driveTokenValid(){
+    return !!driveToken && Date.now() < driveTokenExpiresAt;
+  }
+
+  function driveError(message, status){
+    var e = new Error(message);
+    e.userMessage = message;
+    e.status = status;
+    return e;
+  }
+
+  function updateDriveConnStatus(){
+    var el = document.getElementById('gdrive-conn');
+    if(!el) return;
+    var label = !driveConfigured() ? 'Not configured' : (driveTokenValid() ? 'Connected' : 'Not connected');
+    el.textContent = 'Google Drive: ' + label;
+    el.classList.toggle('connected', label === 'Connected');
+    el.title = !driveConfigured() ? 'Set GOOGLE_CLIENT_ID at the top of the script in index.html' : '';
+  }
+
+  function showDriveResult(kind, text, detail){
+    var el = document.getElementById('gdrive-result');
+    if(!el) return;
+    el.className = 'gdrive-result ' + kind;
+    el.textContent = text;
+    el.title = detail || '';
+  }
+
+  // Shows the persistent "last saved" line for the selected note (or clears the row).
+  function renderDriveInfo(node){
+    if(driveBusy && node && driveJobNodeId === node.id){ showDriveResult('busy', 'Saving to Google Drive…'); return; }
+    if(node && node.googleDriveFileId){
+      var when = '';
+      try{ when = new Date(node.googleDriveSavedAt).toLocaleString(undefined, { dateStyle:'medium', timeStyle:'short' }); }catch(e){}
+      showDriveResult('info', 'Last saved to Google Drive' + (node.googleDriveSavedAt ? ': ' + when : ''));
+    } else {
+      showDriveResult('', '');
+    }
+  }
+
+  function setDriveBusy(busy){
+    var btn = document.getElementById('gdrive-save-btn');
+    if(!btn) return;
+    btn.disabled = busy;
+    btn.textContent = busy ? 'Saving…' : 'Save to Google Drive';
+  }
+
+  function handleDriveTokenResponse(resp){
+    var pending = drivePendingAuth;
+    drivePendingAuth = null;
+    if(!pending) return;
+    if(!resp || resp.error || !resp.access_token){
+      pending.reject(driveError(resp && resp.error === 'access_denied'
+        ? 'Google authorization was denied.'
+        : 'Google authorization failed' + (resp && resp.error ? ' (' + resp.error + ')' : '') + '.'));
+      return;
+    }
+    var oauth = window.google.accounts.oauth2;
+    if(typeof oauth.hasGrantedAllScopes === 'function' && !oauth.hasGrantedAllScopes(resp, GOOGLE_DRIVE_SCOPE)){
+      pending.reject(driveError('Drive permission was not granted — allow ML Notes to create files in your Drive and try again.'));
+      return;
+    }
+    driveToken = resp.access_token;
+    driveTokenExpiresAt = Date.now() + ((Number(resp.expires_in) || 3600) - 60) * 1000;
+    clearTimeout(driveExpiryTimer);
+    driveExpiryTimer = setTimeout(updateDriveConnStatus, Math.max(0, driveTokenExpiresAt - Date.now()) + 500);
+    updateDriveConnStatus();
+    pending.resolve(driveToken);
+  }
+
+  // Must be called synchronously from the click handler so the browser allows the popup.
+  function ensureDriveToken(){
+    if(driveTokenValid()) return Promise.resolve(driveToken);
+    return new Promise(function(resolve, reject){
+      var g = window.google;
+      if(!(g && g.accounts && g.accounts.oauth2)){
+        reject(driveError('Google sign-in library did not load (offline or blocked). Reload the page and try again.'));
+        return;
+      }
+      try{
+        if(!driveTokenClient){
+          driveTokenClient = g.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: GOOGLE_DRIVE_SCOPE,
+            callback: handleDriveTokenResponse,
+            error_callback: function(err){
+              var pending = drivePendingAuth;
+              drivePendingAuth = null;
+              if(!pending) return;
+              var t = err && err.type;
+              pending.reject(driveError(
+                t === 'popup_closed' ? 'The Google sign-in window was closed before finishing.' :
+                t === 'popup_failed_to_open' ? 'The browser blocked the Google sign-in popup — allow popups for this site.' :
+                'Google sign-in failed.'));
+            }
+          });
+        }
+        drivePendingAuth = { resolve: resolve, reject: reject };
+        driveTokenClient.requestAccessToken({ prompt: '' });
+      }catch(e){
+        drivePendingAuth = null;
+        reject(driveError('Could not start Google sign-in.'));
+      }
+    });
+  }
+
+  async function driveFetch(url, options){
+    options = options || {};
+    options.headers = Object.assign({ Authorization: 'Bearer ' + driveToken }, options.headers || {});
+    var res;
+    try{ res = await fetch(url, options); }
+    catch(e){ throw driveError('Network error — check your connection and try again.'); }
+    if(res.ok) return res.json();
+    var detail = '', reason = '';
+    try{
+      var body = await res.json();
+      if(body && body.error){
+        detail = body.error.message || '';
+        reason = (body.error.errors && body.error.errors[0] && body.error.errors[0].reason) || '';
+      }
+    }catch(e){}
+    if(res.status === 401){
+      driveToken = null; driveTokenExpiresAt = 0; updateDriveConnStatus();
+      throw driveError('Google authorization expired — click "Save to Google Drive" again.', 401);
+    }
+    if(res.status === 403 && (reason === 'accessNotConfigured' || /has not been used|is disabled/i.test(detail))){
+      throw driveError('The Google Drive API is not enabled for this Google Cloud project.', 403);
+    }
+    throw driveError('Drive error ' + res.status + (detail ? ': ' + detail : ''), res.status);
+  }
+
+  // Finds (or creates) the "ML Notes" folder. With the drive.file scope the app can only see
+  // folders/files it created itself, so a folder you made by hand won't be reused.
+  async function getDriveFolderId(){
+    if(driveFolderId) return driveFolderId;
+    var q = "name = '" + GOOGLE_DRIVE_FOLDER_NAME + "' and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+    var found = await driveFetch('https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent(q) +
+      '&fields=' + encodeURIComponent('files(id,name)') + '&orderBy=createdTime&pageSize=1&spaces=drive');
+    if(found.files && found.files.length){ driveFolderId = found.files[0].id; return driveFolderId; }
+    var created = await driveFetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: GOOGLE_DRIVE_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+    });
+    driveFolderId = created.id;
+    return driveFolderId;
+  }
+
+  function driveFileName(node){
+    var base = (node.title || 'Untitled').replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    return (base || 'Untitled') + '.json';
+  }
+
+  // The complete note object, minus the Drive bookkeeping fields (the file can't know its own id yet).
+  function driveNotePayload(node){
+    var copy = JSON.parse(JSON.stringify(node));
+    delete copy.googleDriveFileId;
+    delete copy.googleDriveSavedAt;
+    return JSON.stringify(copy, null, 2);
+  }
+
+  // method POST = create a new file, PATCH = update the file with the given id (multipart: metadata + content).
+  function driveUpload(method, fileId, metadata, json){
+    var boundary = 'mlnotes' + uid('');
+    var body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify(metadata) +
+      '\r\n--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + json +
+      '\r\n--' + boundary + '--';
+    return driveFetch('https://www.googleapis.com/upload/drive/v3/files' + (fileId ? '/' + encodeURIComponent(fileId) : '') +
+      '?uploadType=multipart&fields=' + encodeURIComponent('id,trashed'), {
+      method: method,
+      headers: { 'Content-Type': 'multipart/related; boundary=' + boundary },
+      body: body
+    });
+  }
+
+  async function saveNoteToDrive(){
+    if(driveBusy) return;
+    var node = store.selectedId ? store.nodes[store.selectedId] : null;
+    if(!node) return;
+    if(!driveConfigured()){
+      showDriveResult('failed', '⚠ Google Drive save failed — set GOOGLE_CLIENT_ID in index.html first (see README).');
+      return;
+    }
+    driveBusy = true; driveJobNodeId = node.id;
+    setDriveBusy(true);
+    showDriveResult('busy', 'Saving to Google Drive…');
+    try{
+      await ensureDriveToken();                 // first step on purpose: opens the Google popup inside the click
+      var folderId = await getDriveFolderId();
+      var name = driveFileName(node);
+      var json = driveNotePayload(node);        // snapshot taken right before upload = latest content
+      var file = null;
+
+      if(node.googleDriveFileId){               // already on Drive → update that exact file, never duplicate
+        try{
+          file = await driveUpload('PATCH', node.googleDriveFileId, { name: name }, json);
+          if(file.trashed){                     // it was moved to the Drive bin (maybe with its whole folder)
+            file = null;                        // → make a fresh file, in a folder that is not in the bin
+            driveFolderId = null;
+            folderId = await getDriveFolderId();
+          }
+        }catch(e){
+          if(e.status !== 404) throw e;         // 404 = file no longer exists (deleted / different account)
+        }
+      }
+      if(!file){
+        var createMeta = function(){ return { name: name, parents: [folderId], mimeType: 'application/json' }; };
+        try{
+          file = await driveUpload('POST', null, createMeta(), json);
+        }catch(e){
+          if(e.status !== 404) throw e;         // 404 = the folder was deleted since we cached it
+          driveFolderId = null;
+          folderId = await getDriveFolderId();
+          file = await driveUpload('POST', null, createMeta(), json);
+        }
+      }
+
+      if(store.nodes[node.id] === node){        // note may have been deleted while uploading
+        node.googleDriveFileId = file.id;
+        node.googleDriveSavedAt = Date.now();
+        save();
+      }
+      if(store.selectedId === node.id) showDriveResult('ok', '✓ Saved to Google Drive');
+    }catch(e){
+      console.error('Google Drive save failed:', e);
+      if(store.selectedId === node.id){
+        showDriveResult('failed', '⚠ Google Drive save failed' + (e.userMessage ? ' — ' + e.userMessage : ''), String(e && e.message || e));
+      }
+    }finally{
+      driveBusy = false; driveJobNodeId = null;
+      setDriveBusy(false);
+    }
+  }
+
+  /* ---------- Theme ---------- */
+
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀' : '◐';
+  }
+
+  function toggleTheme(){
+    var current = safeStorageGet(THEME_KEY) || 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    safeStorageSet(THEME_KEY, next);
+    applyTheme(next);
+  }
+
+  /* ---------- Init ---------- */
+
+  function wireEvents(){
+    document.getElementById('add-root-btn').onclick = function(){ addChild(null); };
+    document.getElementById('search').oninput = function(e){ searchQuery = e.target.value; renderTree(); };
+    document.getElementById('theme-toggle').onclick = toggleTheme;
+    document.getElementById('export-all-btn').onclick = exportAllPdf;
+    document.getElementById('backup-btn').onclick = downloadBackup;
+    document.getElementById('restore-input').onchange = handleRestore;
+    document.getElementById('export-note-btn').onclick = function(){ if(store.selectedId) exportNotePdf(store.selectedId); };
+    document.getElementById('gdrive-save-btn').onclick = saveNoteToDrive;
+    document.getElementById('delete-note-btn').onclick = function(){ if(store.selectedId) deleteNode(store.selectedId); };
+    document.querySelectorAll('.add-block-row button').forEach(function(btn){
+      btn.onclick = function(){ addBlock(btn.dataset.type); };
+    });
+    document.getElementById('menu-toggle').onclick = function(){
+      document.getElementById('app').classList.toggle('sidebar-open');
+    };
+
+    // Quick capture
+    document.getElementById('quick-capture-btn').onclick = openQuickCapture;
+    document.getElementById('qc-cancel').onclick = closeQuickCapture;
+    document.getElementById('qc-save').onclick = saveQuickCapture;
+    document.getElementById('quick-capture-modal').onclick = function(e){
+      if(e.target.id === 'quick-capture-modal') closeQuickCapture();
+    };
+    document.getElementById('qc-title').onkeydown = function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); saveQuickCapture(); }
+    };
+
+    // Review queue
+    document.getElementById('review-btn').onclick = openReviewModal;
+    document.getElementById('review-modal-close').onclick = closeReviewModal;
+    document.getElementById('review-modal').onclick = function(e){
+      if(e.target.id === 'review-modal') closeReviewModal();
+    };
+    document.getElementById('review-prev').onclick = function(){ reviewStep(-1); };
+    document.getElementById('review-next').onclick = function(){ reviewStep(1); };
+    document.getElementById('review-exit').onclick = exitReviewSession;
+    document.getElementById('review-mark').onclick = function(){
+      if(!reviewSession) return;
+      var node = store.nodes[reviewSession.queue[reviewSession.index]];
+      if(node){ touchReviewed(node); save(); renderNoteMeta(node); }
+      if(reviewSession.index < reviewSession.queue.length - 1){ reviewStep(1); }
+      else { exitReviewSession(); }
+    };
+
+    // Fullscreen image viewer
+    document.getElementById('image-viewer-close').onclick = closeImageViewer;
+    document.getElementById('image-viewer').onclick = closeImageViewer;
+
+    // Favorites filter
+    document.getElementById('fav-filter-btn').onclick = toggleFavoritesFilter;
+
+    // Related notes
+    document.getElementById('add-related-btn').onclick = openRelatedModal;
+    document.getElementById('related-close').onclick = closeRelatedModal;
+    document.getElementById('related-modal').onclick = function(e){
+      if(e.target.id === 'related-modal') closeRelatedModal();
+    };
+    document.getElementById('related-search').oninput = renderRelatedOptions;
+
+    // Save status: when a save failed, clicking it downloads a backup of what is on screen
+    document.getElementById('save-status').onclick = function(){ if(saveFailed) downloadBackup(); };
+  }
+
+  function init(){
+    applyTheme(safeStorageGet(THEME_KEY) || 'light');
+    // Registered separately so shortcuts still work even if some other wiring fails.
+    document.addEventListener('keydown', handleGlobalKeydown);
+    window.addEventListener('beforeunload', function(e){
+      if(saveFailed){ e.preventDefault(); e.returnValue = ''; return ''; }
+    });
+    loadRecent();
+    updateDriveConnStatus();
+    try{ wireEvents(); }
+    catch(e){ console.error('Event wiring failed:', e); }
+
+    try{
+      var loaded = loadStore();
+      if(loaded){
+        store = loaded;
+        renderTree(); renderNoteView(); updateStorageIndicator(); updateReviewBadge(); setSaveStatus('saved');
+        return;
+      }
+    }catch(e){
+      console.error('Failed to load saved notes, starting fresh:', e);
+    }
+
+    fetchSeed().then(function(seed){
+      store = seed || makeWelcomeStore();
+      save(); renderTree(); renderNoteView();
+    }).catch(function(e){
+      console.error('Initialization failed:', e);
+      store = makeWelcomeStore();
+      try{ renderTree(); renderNoteView(); }
+      catch(e2){ document.getElementById('empty-state').textContent = 'Something went wrong loading notes. Try reloading the page.'; }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
