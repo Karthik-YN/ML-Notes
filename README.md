@@ -9,15 +9,26 @@ it's a single HTML file that runs entirely in your browser and saves to
 ## Features
 
 - **Hierarchy** — unlimited nested sections/sub-sections, collapsible tree
-- **Rich content per section** — Text (light markdown: `#`/`##`/`###`, `**bold**`, `*italic*`, `` `code` ``, `-` lists), Code (with language picker, syntax highlighting, and a one-click Copy button), Image (upload screenshots/diagrams, auto-compressed)
+- **Rich content per section**:
+  - **Text Blocks**:
+    - Formatting toolbar with **Bold** (`Ctrl+B`), *Italic* (`Ctrl+I`), <u>Underline</u> (`Ctrl+U`)
+    - **Text Colors**: palette with curated colors + custom color picker
+    - **Highlight Backgrounds**: palette with curated highlight colors + custom color picker
+    - Standard markdown headings (`#`, `##`, `###`), lists (`-`), and code (` ` `)
+    - Clean inline preview with live toggle to edit and a "✓ Done" button
+  - **Code Blocks**: language picker (Python, JS, C++, Go, etc.), syntax highlighting, and a one-click Copy button
+  - **Image Blocks**: upload screenshots/diagrams with caption support and auto-compression
+- **Undo & Redo** — full history stack with dedicated **↶ Undo** and **↷ Redo** buttons and global keyboard shortcuts (`Ctrl+Z`, `Ctrl+Y`, `Cmd+Z`, `Cmd+Shift+Z`)
+- **Safe Deletion** — warning notification ("*Are you sure you want to delete?*") before deleting any text block, content block, or section
+- **Collapsible Sidebar** — collapse the sidebar anytime with the `◀` button for an unobstructed reading/writing view; reopen instantly by clicking the **🧠 ML Notes** icon
 - **Search** — matches section titles, text content, code content, and tags; matching sections stay visible with their parent sections expanded
 - **Tags** — add free-form tags to any section, shown as chips in the note view and included in search
 - **Favorites** — star any section (⭐) from the sidebar or the note view; favorites are marked in the tree
 - **Learning status** — mark each section Learning / Understood / Review, shown as a colored dot in the tree (existing sections default to Learning)
 - **Storage usage** — the sidebar shows an approximate `localStorage` usage estimate and warns when it's getting full
-- **PDF export** — export a single section (with its sub-sections, headings, status/tags, and page numbers) or the whole notebook
+- **PDF export** — export a single section (with its sub-sections, headings, colors, highlights, status/tags, and page numbers) or the whole notebook
 - **Backup / restore** — download everything (including tags, favorites, and status) as JSON, restore it later or on another device
-- **Light/dark theme**, works on mobile
+- **Light/dark theme**, works seamlessly on desktop and mobile
 
 All data stays in your browser's `localStorage` — no backend, login, or sync.
 
@@ -39,7 +50,7 @@ python3 -m http.server 8000
    ```bash
    git init
    git add .
-   git commit -m "ML Notes"
+   git commit -m "ML Notes with formatting, undo/redo, and collapsible sidebar"
    git branch -M main
    git remote add origin https://github.com/<your-username>/<repo-name>.git
    git push -u origin main
